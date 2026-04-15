@@ -1,0 +1,23 @@
+[project]
+name = "banalata"
+authors = [
+  { name="Barun Saha", email="your.email@example.com" }
+]
+description = "Banlata -- Bengali poetry generator"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "D"]
+# Blank line; punctuation; long line; non-top level import
+ignore = ["UP030", "D205", "D415", "E501", "E402"]
+
+[tool.ruff.format]
+quote-style = "single"
+docstring-code-format = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

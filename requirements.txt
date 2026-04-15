@@ -1,0 +1,6 @@
+torch~=2.11.0
+sentencepiece~=0.2.1
+datasets~=3.5.0
+numpy
+
+streamlit~=1.56.0
