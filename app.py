@@ -8,6 +8,7 @@ from pathlib import Path
 import streamlit as st
 import torch
 from PIL import Image
+from indic_transliteration.sanscript import transliterate
 
 # Setup paths relative to this file
 APP_DIR = Path(__file__).parent
@@ -178,9 +179,9 @@ def on_generate_text():
 
     # Call s05_generate_poetry.py to generate poetry based on the prompt_text
     _formatted_prompt = (
-        f'{TOK_BOW}<|author:{author}|><|{content_type}|>\n{st.session_state.prompt_text}'
+        f'{TOK_BOW}<|author:{author}|><|{content_type}|>\n{st.session_state.prompt_text[:10]}'
     )
-    # _logger.debug('Formatted prompt for generation: %s', _formatted_prompt)
+    _logger.debug('Formatted prompt for generation: %s...', _formatted_prompt)
     generated_poetry = s05_generate.generate(
         model=model,
         sp=sp,
@@ -204,19 +205,21 @@ st.text_area(
     height=300,
 )
 
-col3, col4, col5 = st.columns([1, 1, 4], border=False, gap='small')
+col3, col4, col5 = st.columns([2, 1, 4], border=False, gap='small')
 with col3:
-    st.button(label='✍️ রচনা করুন—Compose', on_click=on_generate_text)
+    st.button(label='✍️ রচনা করুন—Compose', type='primary', on_click=on_generate_text)
 
 with col4:
     st.button(
         label='🗑️ মুছুন—Clear',
+        type='secondary',
         on_click=lambda: st.session_state.update(prompt_text=''),
     )
 
 with col5:
     st.button(
-        label='🎲 নমুনা—Sample Bengali',
+        label='🎲 নমুনা—Sample Bengali text',
+        type='secondary',
         on_click=lambda: st.session_state.update(prompt_text=random.choice(SAMPLE_BENGALI_TEXTS)),
     )
 
@@ -227,3 +230,20 @@ with st.sidebar:
     st.slider('Max Length', min_value=64, max_value=512, value=128, key='max_length')
     st.slider('Temperature', min_value=0.1, max_value=1.0, value=0.85, key='temperature')
     st.slider('Top-p (nucleus sampling)', min_value=0.0, max_value=1.0, value=0.92, key='top_p')
+
+
+st.divider()
+
+with st.expander(label='অনলাইন বাংলা কীবোর্ড—Online Bengali keyboard'):
+    st.markdown(
+        'আপনি যদি বাংলা কীবোর্ড ব্যবহার না করতে চান, তাহলে নিচের অনলাইন বাংলা কীবোর্ড ব্যবহার করে'
+        ' বাংলা টেক্সট লিখতে পারেন।'
+        '\n\nIf you do not have a Bengali keyboard, you can use the online'
+        ' Bengali keyboards below to type Bengali text.'
+        '\n- [Google Input Tools online](https://www.google.co.in/inputtools/try/)  '
+        '\n- [Ekushey Phonetic Keyboard](https://ekushey.org/projects/browser_ime/qwerty-phonetic-legacy/)  '
+    )
+
+st.divider()
+
+st.write('Copyright © 2026 Barun Saha. All rights reserved.')
