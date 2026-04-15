@@ -8,7 +8,6 @@ from pathlib import Path
 import streamlit as st
 import torch
 from PIL import Image
-from indic_transliteration.sanscript import transliterate
 
 # Setup paths relative to this file
 APP_DIR = Path(__file__).parent
