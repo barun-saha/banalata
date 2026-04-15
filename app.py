@@ -127,12 +127,12 @@ with st.expander(label='বনলতা সম্পর্কে—About Banalat
         ' সম্বলিত বাংলা সাহিত্যিক পাঠ্যের ওপর ভিত্তি করে গড়ে তোলা হয়েছে।'
     )
     st.write(
-        '\nBanalata is a 28M parameter Bengali language model trained from scratch on public-domain'
-        ' literary works spanning the 8th to 20th century—poetry, prose, and essays across'
-        ' 35+ authors. Conditioned on author identity, it generates stylistically distinct'
-        ' text in the voice of Tagore, Bankimchandra, Jibanananda Das, Sukanta, and others.'
-        ' Built entirely without pretrained weights, on roughly 10M tokens of curated Bengali'
-        ' literary text.'
+        '\nBanalata is a 28M parameter Bengali language model trained from scratch on'
+        ' public-domain literary works spanning the 8th to 20th century—poetry, prose, and'
+        ' essays across 35+ authors. Conditioned on author identity, it generates stylistically'
+        ' distinct text in the voice of Tagore, Bankimchandra, Jibanananda Das, Sukanta, and'
+        ' others. Built entirely without pretrained weights, on roughly 10M tokens of curated'
+        ' Bengali literary text.'
     )
 
 
@@ -225,11 +225,29 @@ with col5:
 
 # Sidebar for settings
 with st.sidebar:
-    st.selectbox('Author style to use', options=AUTHORS, index=12, key='author')
-    st.selectbox('Content type to generate', options=CONTENT_TYPE, index=0, key='content_type')
-    st.slider('Max Length', min_value=64, max_value=512, value=128, key='max_length')
-    st.slider('Temperature', min_value=0.1, max_value=1.0, value=0.85, key='temperature')
+    st.write('### সেটিংস—Settings')
+    st.selectbox('লেখক শৈলী—Author style to use', options=AUTHORS, index=12, key='author')
+    st.selectbox(
+        'বিষয়বস্তুর ধরন—Content type to generate',
+        options=CONTENT_TYPE, index=0, key='content_type'
+    )
+    st.slider('সর্বোচ্চ দৈর্ঘ্য—Max length', min_value=64, max_value=512, value=128, key='max_length')
+    st.slider('তাপমাত্রা—Temperature', min_value=0.1, max_value=1.0, value=0.85, key='temperature')
     st.slider('Top-p (nucleus sampling)', min_value=0.0, max_value=1.0, value=0.92, key='top_p')
+
+    st.divider()
+
+    st.markdown(
+        'এই অ্যাপটি তৈরি করা হয়েছে [Barun Saha](https://www.barunsaha.com/) দ্বারা, এবং এর সোর্স কোড পাওয়া যাবে'
+        ' [GitHub](https://github.com/barun-saha/banalata)।'
+        ' [প্রশিক্ষণ ডেটা](https://huggingface.co/datasets/barunsaha/bangla_sahitya)'
+        ' পাবলিক-ডোমেইন অধীনে উপলব্ধ।'
+        '\n\nThis app has been created by [Barun Saha](https://www.barunsaha.com/)'
+        ' and the source code is available on [GitHub](https://github.com/barun-saha/banalata).'
+        ' [Training data](https://huggingface.co/datasets/barunsaha/bangla_sahitya)'
+        ' available under public-domain. '
+    )
+
 
 
 st.divider()
