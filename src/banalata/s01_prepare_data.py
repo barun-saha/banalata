@@ -77,25 +77,23 @@ def remove_english_lines(text: str) -> str:
 def clean_text(text: str) -> str:
     """Clean and standardize input text, removing noise and normalizing whitespace."""
     text = unicodedata.normalize('NFC', text)
-    EXOTIC_WHITESPACE = str.maketrans(
-        {
-            '\u00a0': ' ',
-            '\u200b': '',
-            '\u200c': '',
-            '\u200d': '',
-            '\u2002': ' ',
-            '\u2003': ' ',
-            '\u2004': ' ',
-            '\u2005': ' ',
-            '\u2006': ' ',
-            '\u2007': ' ',
-            '\u2008': ' ',
-            '\u2009': ' ',
-            '\u200a': ' ',
-            '\u202f': ' ',
-            '\u3000': ' ',
-        }
-    )
+    EXOTIC_WHITESPACE = str.maketrans({
+        '\u00a0': ' ',
+        '\u200b': '',
+        '\u200c': '',
+        '\u200d': '',
+        '\u2002': ' ',
+        '\u2003': ' ',
+        '\u2004': ' ',
+        '\u2005': ' ',
+        '\u2006': ' ',
+        '\u2007': ' ',
+        '\u2008': ' ',
+        '\u2009': ' ',
+        '\u200a': ' ',
+        '\u202f': ' ',
+        '\u3000': ' ',
+    })
     text = text.translate(EXOTIC_WHITESPACE)
     text = remove_english_lines(text)
     text = ''.join(c for c in text if unicodedata.category(c) != 'Cc' or c in '\n\t')
@@ -173,7 +171,6 @@ def main():
     author_works_map = defaultdict(list)
     skipped = 0
 
-    # We are keeping Sunirmal Basu now, but stratifying him!
     authors_to_skip = {'চর্যাগীতি পদাবলী', 'পরিভাষা কেন্দ্রীয় সমিতি সম্পাদিত'}
     authors_with_no_leading_titles = {
         'অক্ষয়কুমার মৈত্রেয়',
@@ -182,10 +179,12 @@ def main():
         'গগন হরকরা',
         'জীবনানন্দ দাশ',
         'দাশরথি রায়',
+        'নবীনচন্দ্র সেন',
         'ভারতচন্দ্র রায়',
         'মাইকেল মধুসূদন দত্ত',
         'মোহিতলাল মজুমদার',
         'যতীন্দ্রনাথ সেনগুপ্ত',
+        'যতীন্দ্রমোহন বাগচি',
         'রজনীকান্ত সেন',
         'সতীনাথ ভাদুড়ী',
         'সত্যেন্দ্রনাথ দত্ত',
@@ -212,7 +211,8 @@ def main():
         author_works_map[author].append((content, tag))
 
     print(
-        f'Initial processing: Kept {sum(len(v) for v in author_works_map.values())} works, skipped {skipped}'
+        f'Initial processing: Kept {sum(len(v) for v in author_works_map.values())} works,'
+        f' skipped {skipped}'
     )
 
     # 2. Handle Pooling (Identify "অজ্ঞাত" authors)
@@ -225,6 +225,7 @@ def main():
     # 3. Stratified Split
     train_works, val_works = [], []
     val_works_meta = []
+    train_split = 0.9
 
     for author, works in final_author_map.items():
         random.shuffle(works)
@@ -232,7 +233,7 @@ def main():
 
         # We split 90/10 by NUMBER of works for that author
         # but because we do it per author, the token distribution remains stable.
-        split_idx = int(len(works) * 0.92)
+        split_idx = int(len(works) * train_split)
 
         # Ensure that if an author has multiple works, at least one is in Val
         if len(works) > 1 and split_idx == len(works):
@@ -244,19 +245,62 @@ def main():
         author_train = works[:split_idx]
         author_val = works[split_idx:]
 
+        # Special case: if only 2 works, keep the longer in train by swapping if needed
+        if len(works) == 2 and len(author_val[0][0]) > len(author_train[0][0]):
+            author_train, author_val = author_val, author_train
+
+        print(f'{author}: {len(author_train)} train works, {len(author_val)} val works', end='')
+
         for content, tag in author_train:
             train_works.append(format_work(aut_tok, content, tag))
         for content, tag in author_val:
             # val_works.append(format_work(aut_tok, content, tag))
             formatted = format_work(aut_tok, content, tag)
             val_works.append(formatted)
-            val_works_meta.append(
-                {
-                    'author': author,
-                    'type': tag,
-                    'formatted_text': formatted,
-                }
+            val_works_meta.append({
+                'author': author,
+                'type': tag,
+                'formatted_text': formatted,
+            })
+
+        t_chars = sum(len(c) for c, _ in author_train)
+        v_chars = sum(len(c) for c, _ in author_val)
+        total = t_chars + v_chars
+        if total > 5000:
+            flag = ' ← !!!' if v_chars / total > 0.15 else ''
+            print(
+                f' // train%: {t_chars / total * 100:>6.1f}% '
+                f' val%: {v_chars / total * 100:>5.1f}% {flag}'
             )
+        else:
+            print()
+
+        # # Token-balance guard: prevent any author's val from exceeding 15% of their tokens
+        # train_chars = sum(len(c) for c, _ in author_train)
+        # val_chars = sum(len(c) for c, _ in author_val)
+        # total_chars = train_chars + val_chars
+        #
+        # if total_chars > 10_000 and val_chars / total_chars > 0.15:
+        #     while len(author_val) > 1 and val_chars / total_chars > 0.12:
+        #         moved_content, moved_tag = author_val.pop()
+        #         author_train.append((moved_content, moved_tag))
+        #         val_chars -= len(moved_content)
+        #         train_chars += len(moved_content)
+
+    # # Debug author distribution
+    # print(f'\n{"Author":<30} {"Train%":>7}  {"Val%":>6}  {"Val Chars":>10}')
+    # print('-' * 65)
+    # for author, works in final_author_map.items():
+    #     split_idx = int(len(works) * train_split)
+    #     t_chars = sum(len(c) for c, _ in works[:split_idx])
+    #     v_chars = sum(len(c) for c, _ in works[split_idx:])
+    #     total = t_chars + v_chars
+    #     if total > 5000:
+    #         flag = ' ← !' if v_chars / total > 0.15 else ''
+    #         print(
+    #             f'{author:<30} {t_chars / total * 100:>6.1f}%  '
+    #             f'{v_chars / total * 100:>5.1f}%  {v_chars:>10,}{flag}'
+    #         )
 
     # 4. Final Shuffle & Write
     random.shuffle(train_works)
