@@ -1,5 +1,3 @@
-# বনলতা (Banalata)
-
 <p align="center">
   <img src="assets/logo_3x2.png" width="600" alt="Banalata Logo">
 </p>
@@ -8,22 +6,24 @@
 somewhat in the style of the legendary Bengali authors.
 
 Banalata is a decoder-only transformer trained from scratch on public-domain Bengali
-literary text (8th–20th centuries). The [Bangla Sahitya](https://huggingface.co/datasets/barunsaha/bangla_sahitya) dataset used for training has works from about 40+ authors, amounting to about 10M tokens.
+literary text (8th–20th centuries). The [Bangla Sahitya](https://huggingface.co/datasets/barunsaha/bangla_sahitya) dataset used for training has works from about 50 authors, amounting to about 10M tokens.
+
+Live demo: https://banalata-bangla-poetry.streamlit.app/
 
 ---
 
 ## Architecture at a glance
 
-| Component          | Choice                              | Why                                        |
-|--------------------|-------------------------------------|--------------------------------------------|
-| Model type         | Decoder-only GPT                    | Proven for text generation; nanoGPT lineage|
-| Params             | ~28M                                | Fits data size; trains efficiently on one GPU  |
-| Positional enc.    | RoPE                                | Better length generalization than learned  |
-| Normalization      | RMSNorm                             | Faster, no bias, numerically stable        |
-| Activation         | SwiGLU                              | Better gradient flow than GELU for small models |
-| Attention          | F.scaled_dot_product_attention      | Auto-dispatches to FlashAttention on CUDA  |
-| Tokenizer          | SentencePiece BPE, vocab=5000       | Learns Bengali syllable clusters natively  |
-| Conditioning       | `<|bow|><|aut:AUTHOR|>` prefix      | Clean author-conditioning without metadata noise |
+| Component          | Choice                         | Why                                        |
+|--------------------|--------------------------------|--------------------------------------------|
+| Model type         | Decoder-only GPT               | Proven for text generation; nanoGPT lineage|
+| Params             | ~28M                           | Fits data size; trains efficiently on one GPU  |
+| Positional enc.    | RoPE                           | Better length generalization than learned  |
+| Normalization      | RMSNorm                        | Faster, no bias, numerically stable        |
+| Activation         | SwiGLU                         | Better gradient flow than GELU for small models |
+| Attention          | F.scaled_dot_product_attention | Auto-dispatches to FlashAttention on CUDA  |
+| Tokenizer          | SentencePiece BPE, vocab=5000  | Learns Bengali syllable clusters natively  |
+| Conditioning       | Use author prefix              | Clean author-conditioning without metadata noise |
 
 ---
 
@@ -55,7 +55,7 @@ python -m src.banalata.s04_train_model
 python -m src.banalata.s04_train_model --resume
 
 # 5. Generate text
-python -m src.banalata.s05_generate --author "রবীন্দ্রনাথ"
+python -m src.banalata.s05_generate --author "রবীন্দ্রনাথ ঠাকুর"
 python -m src.banalata.s05_generate --prompt "আকাশ ভরা সূর্য তারা"
 python -m src.banalata.s05_generate --interactive
 python -m src.banalata.s05_generate --list-authors
@@ -68,14 +68,14 @@ python -m src.banalata.s05_generate --list-authors
 Each work in the training corpus looks like:
 
 ```
-<|bow|><|aut:রবীন্দ্রনাথ|>
+<|bow|><|author:রবীন্দ্রনাথ ঠাকুর|>
 আমার সোনার বাংলা আমি তোমায় ভালোবাসি
 চিরদিন তোমার আকাশ তোমার বাতাস আমার প্রাণে বাজায় বাঁশি।
 ...
 <|eow|>
 ```
 
-At inference, you prime the model with `<|bow|><|aut:X|>` and it generates
+At inference, you prime the model with `<|bow|><|author:X|>` and it generates
 X's literary style until it produces `<|eow|>`.
 
 **Why not include title/author name as text?**
@@ -89,7 +89,7 @@ content. Special tokens are learned as discrete conditioning signals instead.
 
 Authors with the most text in the corpus will have the strongest conditioning
 signal. Run `python 01_prepare_data.py` and check the per-author char counts.
-Authors with < 2000 chars are pooled into `<|aut:অজ্ঞাত|>`.
+Authors with < 2000 chars are pooled into `<|author:অজ্ঞাত|>`.
 
 Authors likely to have strong conditioning (from the dataset):
 - রবীন্দ্রনাথ ঠাকুর (Rabindranath Tagore) — largest corpus
