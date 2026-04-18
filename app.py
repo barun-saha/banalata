@@ -51,6 +51,7 @@ def get_authors_list() -> list[str]:
 
 AUTHORS = get_authors_list()
 CONTENT_TYPE = ['poem', 'prose']
+DEFAULT_AUTHOR_INDEX = 13  # Default to জীবনানন্দ দাশ
 
 
 st.set_page_config(
@@ -97,7 +98,7 @@ st.markdown(
 
 # Initialize session state for widgets that are programmatically updated
 if 'prompt_text' not in st.session_state:
-    st.session_state.prompt_text = random.choice(SAMPLE_BENGALI_TEXTS)
+    st.session_state.prompt_text = ''  # random.choice(SAMPLE_BENGALI_TEXTS)
 
 # Main UI
 logo_path = APP_DIR / 'assets' / 'logo_3x2.png'
@@ -106,6 +107,7 @@ if logo_path.exists():
 else:
     st.error(f'Logo not found at {logo_path}')
     st.stop()
+
 # Display the logo centered using a column for better structure
 # This ensures the image container itself is centered
 col1, col2 = st.columns([1, 2], border=False, gap='xxsmall', vertical_alignment='center')
@@ -162,7 +164,7 @@ if model is None:
 def on_generate_text():
     """Callback function to generate poetry when the button is clicked."""
     # Access variables from session state to ensure they're available in callbacks
-    author = st.session_state.get('author', AUTHORS[12])
+    author = st.session_state.get('author', AUTHORS[DEFAULT_AUTHOR_INDEX])
     content_type = st.session_state.get('content_type', CONTENT_TYPE[0])
     temperature = st.session_state.get('temperature', 0.85)
     top_p = st.session_state.get('top_p', 0.92)
@@ -225,7 +227,12 @@ with col5:
 # Sidebar for settings
 with st.sidebar:
     st.write('### সেটিংস—Settings')
-    st.selectbox('লেখক শৈলী—Author style to use', options=AUTHORS, index=12, key='author')
+    st.selectbox(
+        'লেখক শৈলী—Author style to use',
+        options=AUTHORS,
+        index=DEFAULT_AUTHOR_INDEX,
+        key='author'
+    )
     st.selectbox(
         'বিষয়বস্তুর ধরন—Content type to generate',
         options=CONTENT_TYPE, index=0, key='content_type'
